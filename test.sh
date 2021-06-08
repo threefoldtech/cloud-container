@@ -2,8 +2,8 @@ ROOT=$1
 
 sudo virtiofsd --socket-path=/tmp/root.socket -o source=$ROOT -o cache=none &
 
-#INIT='init=/sbin/zinit "init"'
-INIT='init=/bin/sh'
+INIT='init=/sbin/zinit "init"'
+#INIT='init=/bin/sh'
 
 exec sudo cloud-hypervisor \
     --kernel output/vmlinuz-linux \

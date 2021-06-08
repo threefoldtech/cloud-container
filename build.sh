@@ -10,7 +10,7 @@ cleanup() {
 
 trap cleanup EXIT
 docker save kernel | tar -x -C ${tmp}
-mkdir output
+mkdir -p output || true
 
 for layer in $(find ${tmp} -name layer.tar); do
     tar -xf $layer -C output
