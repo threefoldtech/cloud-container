@@ -1,6 +1,10 @@
 #!/usr/bin/ash
 
 run_hook() {
+   echo "mounting pts"
+   mkdir -p /dev/pts || true
+   mount -t devpts -o rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=666 devpts /dev/pts
+
    echo "setting up network"
    ip a a 192.168.123.100/24 dev eth0
    ip l set eth0 up
@@ -17,9 +21,7 @@ run_latehook() {
       return
    fi
 
-   echo "applying environment"
    # file exists and is regular file.
-
    script=$(cat $file | while read line; do
                if [ -n "${line}" ]; then
                   echo "export '${line}'"
