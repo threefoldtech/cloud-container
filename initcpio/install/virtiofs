@@ -1,0 +1,26 @@
+#!/bin/bash
+
+build() {
+    add_module fuse
+    add_module virtiofs
+    add_module virtio_blk
+    add_module virtio_net
+    add_module virtio_rng
+    add_module virtio_pci
+    add_module virtio_pci_modern_dev
+    add_module aesni_intel
+    add_module crc32_pclmul
+    add_module crc32c_intel
+    add_module crypto_simd
+    add_module cryptd
+
+    add_runscript
+}
+
+help() {
+    cat <<HELPEOF
+Provide support for virtiofs
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

@@ -1,0 +1,12 @@
+#!/usr/bin/ash
+
+run_hook() {
+   echo "settign up environment"
+   export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+   echo "setting up network"
+   ip a a 192.168.123.100/24 dev eth0
+   ip l set eth0 up
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
