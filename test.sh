@@ -1,9 +1,11 @@
-ROOT=$1
+root=$1
+init=$2
 
-sudo virtiofsd --socket-path=/tmp/root.socket -o source=$ROOT -o cache=none &
+sudo virtiofsd --socket-path=/tmp/root.socket -o source=${root} -o cache=none &
 
-INIT='init=/sbin/zinit "init"'
-#INIT='init=/bin/sh'
+if [ -z "${init}" ]; then
+    init='init=/bin/sh'
+fi
 
 exec sudo cloud-hypervisor \
     --kernel output/vmlinuz-linux \
@@ -14,5 +16,5 @@ exec sudo cloud-hypervisor \
     --memory size=1024M,shared=on \
     --fs tag=/dev/root,socket=/tmp/root.socket  \
     --net tap=cont0,ip=192.168.123.100,mask=255.255.255.0 \
-    --cmdline "console=ttyS0 rootfstype=virtiofs root=/dev/root rw ${INIT}" \
+    --cmdline "console=ttyS0 rootfstype=virtiofs root=/dev/root rw ${init}" \
     --rng
