@@ -8,6 +8,7 @@ run_hook() {
    echo "setting up network"
    ip a a 192.168.123.100/24 dev eth0
    ip l set eth0 up
+   ip r a default via 192.168.123.1
 }
 
 run_latehook() {
