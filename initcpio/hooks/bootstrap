@@ -5,10 +5,10 @@ run_hook() {
    mkdir -p /dev/pts || true
    mount -t devpts -o rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=666 devpts /dev/pts
 
-   echo "setting up network"
-   ip a a 192.168.123.100/24 dev eth0
+   echo "setting up network ip=${ip} gw=${gw}"
+   ip a a ${ip} dev eth0
    ip l set eth0 up
-   ip r a default via 192.168.123.1
+   ip r a default via ${gw}
 }
 
 run_latehook() {
