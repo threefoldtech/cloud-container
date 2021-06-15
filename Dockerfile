@@ -3,6 +3,7 @@ RUN pacman -Sy
 RUN pacman -S --noconfirm linux mkinitcpio
 COPY mkinitcpio.conf /root/
 COPY initcpio /root/initcpio
+COPY setupnetwork /
 # override the original initcpio
 COPY init /usr/lib/initcpio
 WORKDIR /root
