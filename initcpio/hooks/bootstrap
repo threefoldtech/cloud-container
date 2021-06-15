@@ -6,7 +6,7 @@ run_hook() {
    mount -t devpts -o rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=666 devpts /dev/pts
 
    echo "setting up network"
-   sh /setupnetwork
+   bash /setupnetwork
 }
 
 run_latehook() {
