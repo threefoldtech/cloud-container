@@ -9,4 +9,4 @@ WORKDIR /root
 RUN KERNELVERSION=$(ls /lib/modules) mkinitcpio -D /usr/lib/initcpio -D initcpio -v -c mkinitcpio.conf -g initramfs-linux.img
 
 FROM scratch
-COPY --from=builder /boot/vmlinuz-linux /root/initramfs-linux.img /
+COPY --from=builder /root/initramfs-linux.img /

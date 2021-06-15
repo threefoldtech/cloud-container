@@ -2,8 +2,17 @@ root=$1
 index=$2
 init=$3
 
+bridge="zos0"
+tap="cont-${index}"
+
+if ! ip l show $tap > /dev/null; then
+    ip tuntap add dev "$tap" mode tap
+    ip l set "$tap" master $bridge
+    ip l set "$tap" up
+fi
+
 socket="/tmp/root.${index}.socket"
-sudo virtiofsd --socket-path=${socket} -o source=${root} &
+sudo virtiofsd-rs --shared-dir ${root} --socket ${socket}  &
 
 if [ -z "${init}" ]; then
     init='init=/sbin/zinit "init"'
@@ -17,6 +26,6 @@ exec sudo cloud-hypervisor \
     --cpus boot=1 \
     --memory size=300M,shared=on \
     --fs tag=/dev/root,socket=${socket}  \
-    --net tap=cont0 \
+    --net tap=${tap} \
     --cmdline "console=ttyS0 rootfstype=virtiofs root=/dev/root rw ip=192.168.123.${index}/24 gw=192.168.123.1 ${init}" \
     --rng

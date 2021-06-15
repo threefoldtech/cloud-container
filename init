@@ -1,11 +1,33 @@
 #!/usr/bin/ash
 
 udevd_running=0
-mount_handler=default_mount_handler
+mount_handler=custom_mount_handler
 init=/sbin/init
 rd_logmask=0
 
 . /init_functions
+
+mount_root() {
+    mount ${rootfstype:+-t $rootfstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$root" "$1"
+    return $?
+}
+
+custom_mount_handler() {
+    msg ":: mounting '$root' on real root"
+
+    # Mount root at /new_root
+    for trial in $(seq 1 5); do
+        echo ":: trial '$trial'"
+        if mount_root /new_root; then
+            return 0
+        fi
+        sleep 1
+    done
+
+    echo "You are now being dropped into an emergency shell."
+    launch_interactive_shell
+    msg "Trying to continue (this will most likely fail) ..."
+}
 
 mount_setup
 
@@ -41,7 +63,11 @@ unset rootdev
 fsck_root
 
 # Mount root at /new_root
-"$mount_handler" /new_root
+for trial in $(seq 1 5); do
+    echo "trying to mount root"
+    "$mount_handler" /new_root && break
+    sleep 1
+done
 
 run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
 run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
