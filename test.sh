@@ -6,9 +6,9 @@ bridge="zos0"
 tap="cont-${index}"
 
 if ! ip l show $tap > /dev/null; then
-    ip tuntap add dev "$tap" mode tap
-    ip l set "$tap" master $bridge
-    ip l set "$tap" up
+    sudo ip tuntap add dev "$tap" mode tap
+    sudo ip l set "$tap" master $bridge
+    sudo ip l set "$tap" up
 fi
 
 socket="/tmp/root.${index}.socket"
@@ -19,7 +19,7 @@ if [ -z "${init}" ]; then
 fi
 
 exec sudo cloud-hypervisor \
-    --kernel output/bzImage \
+    --kernel output/kernel \
     --initramfs output/initramfs-linux.img \
     --console off \
     --serial tty \
