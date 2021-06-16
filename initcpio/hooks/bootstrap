@@ -13,8 +13,12 @@ run_latehook() {
    echo "settign up environment"
    export HOME=/root
    export PATH=/bin:/sbin:/usr/bin:/usr/sbin
-   echo "checking for /etc/environment"
 
+   mkdir -p /new_root/etc || true
+   echo "updating resolv.conf"
+   cp /etc/resolv.conf /new_root/etc/
+
+   echo "checking for /etc/environment"
    file=/new_root/etc/environment
    if [ ! -f $file ]; then
       return

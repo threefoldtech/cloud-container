@@ -137,7 +137,9 @@ fi
 
 # formality
 mkdir -p /etc || true
-rm /etc/resolv.conf || true
+if [ -f /etc/resolv.conf ]; then
+	rm /etc/resolv.conf
+fi
 echo "" > /etc/resolv.conf
 for i in ${dns[@]} ; do
 	echo "nameserver ${i}" >> /etc/resolv.conf
