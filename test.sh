@@ -15,7 +15,7 @@ socket="/tmp/root.${index}.socket"
 sudo virtiofsd-rs --shared-dir ${root} --socket ${socket}  &
 
 if [ -z "${init}" ]; then
-    init='init=/sbin/zinit "init"'
+    init='init=/bin/sh'
 fi
 
 exec sudo cloud-hypervisor \
@@ -27,5 +27,5 @@ exec sudo cloud-hypervisor \
     --memory size=300M,shared=on \
     --fs tag=/dev/root,socket=${socket}  \
     --net tap=${tap} \
-    --cmdline "console=ttyS0 rootfstype=virtiofs root=/dev/root rw ip=192.168.123.${index}/24 gw=192.168.123.1 ${init}" \
+    --cmdline "console=ttyS0 rootfstype=virtiofs root=/dev/root rw ${init}" \
     --rng

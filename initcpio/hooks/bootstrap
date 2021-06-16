@@ -9,6 +9,24 @@ run_hook() {
    bash /setupnetwork
 }
 
+process_mounts() {
+   for c in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
+      name=vd${c}
+      target=$(eval echo \$$name)
+      if [ "$target" = "/" ]; then
+         echo "invalid mount target /"
+         continue
+      fi
+      # we only try as long as the given mount
+      # has a valid target
+      if [ ! -z "$target" ]; then
+         dst="/new_root/$target"
+         echo "mounting $name on $target"
+         mount "/dev/$name" "$dst"
+      fi
+   done
+}
+
 run_latehook() {
    echo "settign up environment"
    export HOME=/root
@@ -17,6 +35,9 @@ run_latehook() {
    mkdir -p /new_root/etc || true
    echo "updating resolv.conf"
    cp /etc/resolv.conf /new_root/etc/
+
+   echo "process mounts"
+   process_mounts
 
    echo "checking for /etc/environment"
    file=/new_root/etc/environment
