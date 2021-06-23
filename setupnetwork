@@ -1,146 +1,110 @@
 #!/usr/bin/env bash
 
-# happy path and flawless cmdline only
+# this script set up networking for the grid vms (and containers) it accepts the following paras
+# net_eth<X>=[CIDR;...]
+#		where X is [0..5]
+# net_r4=[<network>,<gateway>;...]
+#		network=(CIDR|default)
+#		gateway=(IP|nic)
+# net_r6 is same as r4 but should have routes for ipv6
+# net_dns=[IP;...]
 
-declare -a eth0 eth1 dns
-net_eth0=""
-net_eth1=""
-net_dns=""
-start(){
-	cmdline=($(cat /proc/cmdline))
-	for entry in ${cmdline[@]} ; do
-	    case $entry in
-	    net_*)
-	    	eval $entry
-		;;
-	    esac
-	done
-}
+# Example: net_eth0=10.1.1.3/24;fd39:775a:4846:1::3/64
+# 		   net_eth1=302:82a8:705:e5cf:65c6:9fb8:50d1:87c8/64
+#		   net_r4=default,10.1.1.1;10.1.0.0/16,10.1.1.1
+#		   net_r6=default,fd39:775a:4846:1::1;200::/7,302:82a8:705:e5cf::1
+#		   net_dns=8.8.8.8;1.1.1.1;2001:4860:4860::8888
 
-start
+# Note all argument are available to script through env variables already injected
+# by the initrd bootstrap. so no need for /proc/cmdline parsing
 
+# set some global settings
 sysctl -w net.ipv6.conf.all.accept_ra=2
 sysctl -w net.ipv6.conf.all.accept_ra_defrtr=2
 
-if [ -d "/sys/class/net/eth1" ] ; then
-	sysctl -w net.ipv6.conf.eth1.accept_ra=2
-	sysctl -w net.ipv6.conf.eth1.accept_ra_defrtr=2
-	eth1=(${net_eth1//,/ })
-else
-	unset net_eth1
-fi
+setup_nic() {
+	nic=$1
+	input=$2
+	ips=(${input//;/ })
 
-# if there is no eth1, unset these parameters
-if ! ip link show dev eth1 2> /dev/null ; then unset net_eth1 ; fi
-
-eth0=(${net_eth0//,/ })
-dns=(${net_dns//,/ })
-
-
-declare eth0_default
-declare eth1_default
-
-# no phys eth1? remove the parameter
-if ! ip link show dev eth1 > /dev/null 2>&1 ; then
-	unset net_eth1
-	eth0_default=1
-fi
-
-
-# eth0 receives an rfc1918 addr through the cmdline
-# if it has 7 parms, ipv4/msk,gw,netroute,ipv6/msk,gw,priv
-# OR                 ipv4/msk,gw,netroute,priv
-
-is_priv=${eth0[$((${#eth0[@]}-1))]}
-
-# verify if "priv" __and__ no net_eth1 or even no phys eth1
-if [[ "${is_priv}" == *"priv"* ]] ; then
-	if [ ${#eth0[@]} -eq 6  ] ; then
-		eth0_ip=${eth0[0]}
-		eth0_gw=${eth0[1]}
-		eth0_net=${eth0[2]}
-		eth0_ip6=${eth0[3]}
-		eth0_gw6=${eth0[4]}
-	# no ipv6?
-	elif [ ${#eth0[@]} -eq 4 ] ; then
-		eth0_ip=${eth0[0]}
-		eth0_gw=${eth0[1]}
-		eth0_net=${eth0[2]}
-	else
-		echo "[-] incorrect number of parameters"
-		exit 1
-
+	if ! ip l show "${nic}"; then
+		return
 	fi
-	eth0_default=1
-fi
 
-# eth1 has **always** the public ip (for now), where
-# it has the public ipv4, it's gateway and the eventual ygg config
-# so : ipv4/msk,gw,yggipv6/msk,gw6,slaac,pub
-# OR:  ipv4/msk,gw,slaac,pub
+	ip l set "$nic" up
+	for ip in ${ips[@]}; do
+		ip a a "$ip" dev "$nic"
+	done
+}
 
-# that means that there can be 2 sets of pawametews:
+# dns are defined as net_dns=[IP;...]
+setup_dns() {
+	if [ -z "${net_dns}" ]; then
+		return
+	fi
+	dns=(${net_dns//;/ })
 
-if [ ! -z "${net_eth1}" ] ; then
-	is_priv=${eth1[$((${#eth1[@]}-1))]}
-	if [[ "${is_priv}" == *"pub"* ]] ; then
-		if [ ${#eth1[@]} -eq 6 ] ; then
-			eth1_ip=${eth1[0]}
-			eth1_gw=${eth1[1]}
-			eth1_ypv6=${eth1[2]}
-			eth1_ygw6=${eth1[3]}
-			# thus eth0_default is no more
-		else
-			eth1_ip=${eth1[0]}
-			eth1_gw=${eth1[1]}
+	mkdir -p /etc || true
+	if [ -f /etc/resolv.conf ]; then
+		rm /etc/resolv.conf
+	fi
 
+	for ns in ${dns[@]} ; do
+		echo "nameserver ${ns}" >> /etc/resolv.conf
+	done
+}
+
+# nics are defined as net_eth<X>=[CIDR;...]
+setup_nics() {
+	# setting up nics
+	for index in $(seq 0 5); do
+		nic="eth${index}"
+		arg="net_${nic}"
+		value=$(eval echo \$$arg)
+		if [ -z "$value" ]; then
+			continue
 		fi
-		eth1_ipv6="slaac"
-		eth0_default=0
+		# so we now have nic wit given config data
+		setup_nic $nic $value
+	done
+}
+
+setup_route() {
+	ver=$1
+	route=$2
+	parts=(${route//,/ })
+
+	src=${parts[0]}
+	gw=${parts[1]}
+
+	#TODO: validation ?
+	via=via
+	if [ "${gw:0:3}" = "eth" ]; then
+		via=dev
 	fi
-fi
+	ip -$ver r a "${src}" "$via" "${gw}"
+}
 
-# OK, on with it
+# routes are in the format [<src>,<dest>;...]
+setup_routes() {
+	routes=(${net_r4//;/ })
+	for route in ${routes[@]}; do
+		setup_route 4 $route
+	done
+	routes=(${net_r6//;/ })
+	for route in ${routes[@]}; do
+		setup_route 6 $route
+	done
+}
 
-# eth0 is always there.
+echo "setting up nics"
+# setting up nics
+setup_nics
 
-ip link set eth0 up
-ip addr add ${eth0_ip} dev eth0
+echo "setting up routes"
+# setting up routes
+setup_routes
 
-if [ "${eth0_default}" = "1" ] ; then
-	ip r add default via ${eth0_gw}
-else
-	ip r add ${eth0_net} via ${eth0_gw}
-	ip r add 100.64.0.0/10 via ${eth0_gw}
-fi
-
-if [ ! -z "${eth0_ip6}" ] ; then
-	# eth0_ipv6 would typically be an fd00/8 address
-	ip addr add ${eth0_ip6} dev eth0
-	if [ "${eth0_default}" -eq 1 ] ; then
-		ip -6 r add default via ${eth0_gw6}
-	else
-		ip -6 r add fd00::/7 via ${eth0_gw6}
-	fi
-fi
-
-# eth1 exists and has config
-if [ ! -z "${net_eth1}" -a "$eth1_ipv6" = "slaac" ] ; then
-	ip link set eth1 up
-	ip addr add ${eth1_ip} dev eth1
-	ip route add default via ${eth1_gw}
-	if [ ! -z ${eth1_ypv6} ]; then
-		ip addr add ${eth1_ypv6} dev eth1
-		ip route add 200::/7 via ${eth1_ygw6}
-	fi
-fi
-
-# formality
-mkdir -p /etc || true
-if [ -f /etc/resolv.conf ]; then
-	rm /etc/resolv.conf
-fi
-echo "" > /etc/resolv.conf
-for i in ${dns[@]} ; do
-	echo "nameserver ${i}" >> /etc/resolv.conf
-done
+echo "setting up nameservers"
+# setting up dns
+setup_dns
