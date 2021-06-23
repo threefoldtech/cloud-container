@@ -4,8 +4,8 @@ cloud-container is only a builder for a custom initramfs image that allows runni
 The image does the following for this to work:
 - [x] Add all required `virtio` modules to support `virtiofs`, `pci`, and `disks`
 - [x] Expose environment variables from `/etc/environment` to the container `entrypoint`. A container manager then can simply write down the /etc/environment file in the container root before booting.
-- [ ] Configure network interface via cmdline argument passed to the kernel
-- [ ] Pre mount attached disks to configured endpoints
+- [x] Pre mount attached disks to configured endpoints
+- [x] Configure network interface via cmdline argument passed to the kernel [setupnetwork](setupnetwork)
 
 ### kernel arguments
 - `net_ethX=SPEC` argument to configure each interface *TO BE DEFINED*
