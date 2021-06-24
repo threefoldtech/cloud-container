@@ -14,10 +14,13 @@ The image does the following for this to work:
 ### Building
 **pre-requirements**: `docker`
 
+This will build the required initram-fs
 Run
 ```bash
 ./build.sh
 ```
+
+To build the kernel, use the `config` file from the repo to build the kernel. This is only tested with linux 5.12.9. This will be automated later in this repo as well. buf for now you have to do do it manually.
 
 ### Testing container
 **pre-requirement**: `virtiofsd`, `cloud-hypervisor`
