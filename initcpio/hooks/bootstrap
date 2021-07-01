@@ -3,7 +3,10 @@
 run_hook() {
    echo "mounting pts"
    mkdir -p /dev/pts || true
+   mkdir -p /sys/fs/cgroup || true
+
    mount -t devpts -o rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=666 devpts /dev/pts
+   mount -t cgroup none /sys/fs/cgroup
 
    echo "setting up network"
    bash /setupnetwork

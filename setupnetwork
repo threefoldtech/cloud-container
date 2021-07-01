@@ -97,6 +97,8 @@ setup_routes() {
 	done
 }
 
+ip l set lo up
+
 echo "setting up nics"
 # setting up nics
 setup_nics
