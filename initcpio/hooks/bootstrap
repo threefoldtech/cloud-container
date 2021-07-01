@@ -24,6 +24,7 @@ process_mounts() {
       # has a valid target
       if [ ! -z "$target" ]; then
          dst="/new_root/$target"
+         mkdir -p ${dst} || true
          echo "mounting $name on $target"
          mount "/dev/$name" "$dst"
       fi
