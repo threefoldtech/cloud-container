@@ -1,6 +1,6 @@
 FROM archlinux as builder
 RUN pacman -Sy
-RUN pacman -S --noconfirm linux mkinitcpio
+RUN pacman -S --noconfirm linux mkinitcpio inetutils
 COPY mkinitcpio.conf /root/
 COPY initcpio /root/initcpio
 COPY setupnetwork /

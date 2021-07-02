@@ -28,5 +28,5 @@ exec sudo cloud-hypervisor \
     --disk path=disk.img \
     --fs tag=/dev/root,socket=${socket}  \
     --net tap=${tap} \
-    --cmdline "console=ttyS0 rootfstype=virtiofs root=/dev/root vda=/opt/data net_eth0=192.168.123.${index}/24 net_dns=8.8.8.8 net_r4=default,192.168.123.1 rw ${init}" \
+    --cmdline "console=ttyS0 rootfstype=virtiofs host=azmy root=/dev/root vda=/opt/data net_eth0=192.168.123.${index}/24 net_dns=8.8.8.8 net_r4=default,192.168.123.1 rw ${init}" \
     --rng
