@@ -35,6 +35,21 @@ process_mounts() {
       fi
    done
 }
+  
+process_virtiofs_mounts() {
+   for entry in $(cat ./cmdline) ; do
+      case $entry in
+      qsfs:*)
+            prefixless=${entry#qsfs:}
+            fs=${prefixless%=*}
+            target=${prefixless#*=}
+            dst="/new_root/$target"
+            mkdir -p $dst
+            mount -t virtiofs $fs $dst
+            ;;
+      esac
+   done
+}
 
 run_latehook() {
    echo "settign up environment"
@@ -47,6 +62,9 @@ run_latehook() {
 
    echo "process mounts"
    process_mounts
+
+   echo "process virtiofs mounts"
+   process_virtiofs_mounts
 
    echo "checking for /etc/environment"
    file=/new_root/etc/environment
