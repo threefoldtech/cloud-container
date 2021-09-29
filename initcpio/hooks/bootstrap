@@ -44,8 +44,14 @@ env | while IFS= read -r entry; do
             fs=${entry%%=*}
             fs=${fs#qsfs_}
             target=${entry#*=}
+            if [ "$target" = "/" ]; then
+               echo "invalid mount target /"
+               continue
+            fi
+
             dst="/new_root/$target"
             mkdir -p "$dst" || true
+            echo "mounting virtiofs $fs on $target"
             mount -t virtiofs "$fs" "$dst"
             ;;
       esac
