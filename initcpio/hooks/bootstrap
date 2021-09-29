@@ -29,23 +29,24 @@ process_mounts() {
       # has a valid target
       if [ ! -z "$target" ]; then
          dst="/new_root/$target"
-         mkdir -p ${dst} || true
+         mkdir -p "${dst}" || true
          echo "mounting $name on $target"
          mount "/dev/$name" "$dst"
       fi
    done
 }
   
+# manually tested on export qsfs_qsfsnamewithoutdashesorcolons="/New Folder/targ=t"
 process_virtiofs_mounts() {
-   for entry in $(cat ./cmdline) ; do
+env | while IFS= read -r entry; do
       case $entry in
-      qsfs:*)
-            prefixless=${entry#qsfs:}
-            fs=${prefixless%=*}
-            target=${prefixless#*=}
+      qsfs_*)
+            fs=${entry%%=*}
+            fs=${fs#qsfs_}
+            target=${entry#*=}
             dst="/new_root/$target"
-            mkdir -p $dst
-            mount -t virtiofs $fs $dst
+            mkdir -p "$dst" || true
+            mount -t virtiofs "$fs" "$target"
             ;;
       esac
    done
