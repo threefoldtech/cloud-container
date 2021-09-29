@@ -46,7 +46,7 @@ env | while IFS= read -r entry; do
             target=${entry#*=}
             dst="/new_root/$target"
             mkdir -p "$dst" || true
-            mount -t virtiofs "$fs" "$target"
+            mount -t virtiofs "$fs" "$dst"
             ;;
       esac
    done
