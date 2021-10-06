@@ -1,10 +1,10 @@
 FROM archlinux as builder
 RUN pacman -Sy
+RUN pacman -S --noconfirm linux mkinitcpio inetutils base-devel bc python3 pahole
 WORKDIR /opt
 RUN curl -O https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-5.12.9.tar.gz
 RUN tar -xf linux-5.12.9.tar.gz
 COPY config /opt/linux-5.12.9/.config
-RUN pacman -S --noconfirm linux mkinitcpio inetutils base-devel bc python3 pahole
 WORKDIR /opt/linux-5.12.9/
 RUN make -j 8
 # this is all done later so build goes faster
