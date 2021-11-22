@@ -75,13 +75,6 @@ run_latehook() {
    echo "process virtiofs mounts"
    process_virtiofs_mounts
 
-   echo "executing zosrc"
-   # eval to exceute without forking
-   [ -f /new_root/.zosrc ] && eval "`cat /new_root/.zosrc`"
-   
-   # should it be removed?
-   rm -f /new_root/.zosrc
-
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
