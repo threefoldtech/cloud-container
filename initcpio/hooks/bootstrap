@@ -8,10 +8,13 @@ run_hook() {
    fi
 
    mkdir -p /dev/pts || true
+   mkdir -p /dev/shm || true
    mkdir -p /sys/fs/cgroup || true
 
    mount -t devpts -o rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=666 devpts /dev/pts
    mount -t cgroup none /sys/fs/cgroup
+   mount -t tmpfs tmpfs /dev/shm
+   ln -s /proc/self/fd /dev/fd
 
    echo "setting up network"
    bash /setupnetwork
@@ -62,7 +65,6 @@ run_latehook() {
    echo "settign up environment"
    export HOME=/root
    export PATH=/bin:/sbin:/usr/bin:/usr/sbin
-
    mkdir -p /new_root/etc || true
    echo "updating resolv.conf"
    cp /etc/resolv.conf /new_root/etc/
@@ -73,20 +75,6 @@ run_latehook() {
    echo "process virtiofs mounts"
    process_virtiofs_mounts
 
-   echo "checking for /etc/environment"
-   file=/new_root/etc/environment
-   if [ ! -f $file ]; then
-      return
-   fi
-
-   # file exists and is regular file.
-   script=$(cat $file | while read line; do
-               if [ -n "${line}" ]; then
-                  echo "export '${line}'"
-               fi
-            done)
-
-   eval $script
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
