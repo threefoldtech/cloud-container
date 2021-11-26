@@ -75,7 +75,8 @@ run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
 # 'set --' in .zosrc requires it to run outside of any function
 [ -f /new_root/.zosrc ] && source /new_root/.zosrc
 
-rm -f /new_root/.zosrc
+# for debugging purposes, we keep .zosrc
+# rm -f /new_root/.zosrc
 
 if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
     # Nothing got mounted on /new_root. This is the end, we don't know what to do anymore
