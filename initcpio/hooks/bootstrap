@@ -76,13 +76,13 @@ ff02::1   ip6-allnodes
 ff02::2   ip6-allrouters
 END
 )
-   [ -f /etc/hosts ] || touch /etc/hosts
+   [ -f /new_root/etc/hosts ] || touch /new_root/etc/hosts
 
    echo "$HOSTS" | while IFS= read -r entry; do
       ip=${entry%% *}
       hostname=${entry##* }
-      if ! grep -E -q "\s$hostname(\s|\$)" /etc/hosts; then
-         echo $ip $hostname >> /etc/hosts
+      if ! grep -E -q "\s$hostname(\s|\$)" /new_root/etc/hosts; then
+         echo $ip $hostname >> /new_root/etc/hosts
       fi
    done
 
