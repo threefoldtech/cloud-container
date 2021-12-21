@@ -19,7 +19,7 @@ run_hook() {
    echo "setting up network"
    bash /setupnetwork
 
-   # we only care that an outgoing packet receives the gateway
+   # we only care that an outgoing packet arrives at the gateway
    ping -c1 -w1 8.8.8.8
 }
 
