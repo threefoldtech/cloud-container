@@ -1,6 +1,10 @@
 #!env sh
 set +e
 
+pushd cloud-init
+CGO_ENABLED=0 go build -o ../cloudinit
+popd
+
 docker build -t kernel .
 
 tmp=$(mktemp -d)

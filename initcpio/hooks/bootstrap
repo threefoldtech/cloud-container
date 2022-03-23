@@ -16,11 +16,14 @@ run_hook() {
    mount -t tmpfs tmpfs /dev/shm
    ln -s /proc/self/fd /dev/fd
 
-   echo "setting up network"
-   bash /setupnetwork
+   seed=$(blkid -t LABEL="cidata" -o device)
+   if [ -z "$seed" ]; then
+      echo "no seed disk found"
+      exit 1
+   fi
 
-   # we only care that an outgoing packet arrives at the gateway
-   ping -c1 -w1 8.8.8.8
+   mkdir -p /seed
+   mount -t vfat "$seed" /seed
 }
 
 process_mounts() {
@@ -80,20 +83,20 @@ ff02::2 ip6-allrouters'
 run_latehook() {
    echo "settign up environment"
    export HOME=/root
-   export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+   export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
    mkdir -p /new_root/etc || true
+
+   echo "setting up system"
+   /cloudinit /seed /new_root
+
+   # we only care that an outgoing packet arrives at the gateway
+   ping -c1 -w1 8.8.8.8
+
    echo "updating resolv.conf"
    cp /etc/resolv.conf /new_root/etc/
 
-   echo "process mounts"
-   process_mounts
-
-   echo "process virtiofs mounts"
-   process_virtiofs_mounts
-
    echo "fill /etc/hosts"
    fill_etc_hosts
-
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
