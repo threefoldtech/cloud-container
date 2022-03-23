@@ -5,6 +5,8 @@ pushd cloud-init
 CGO_ENABLED=0 go build -o ../cloudinit
 popd
 
+strip cloudinit
+
 docker build -t kernel .
 
 tmp=$(mktemp -d)

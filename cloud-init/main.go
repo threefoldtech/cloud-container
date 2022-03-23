@@ -22,4 +22,8 @@ func main() {
 	if err := ApplyUserData(seed, root); err != nil {
 		log("failed to apply user data: %v", err)
 	}
+
+	if err := ApplyNetwork(seed, root); err != nil {
+		log("failed to apply network: %v", err)
+	}
 }

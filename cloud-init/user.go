@@ -24,7 +24,6 @@ type UserData struct {
 }
 
 func applyMounts(root string, mounts [][]string) error {
-	//mounts are [source, mountpoint, fstype, "default", "0", "0"]
 	for _, mount := range mounts {
 		if len(mount) != 6 {
 			log("mount is not valid: %v", mount)
@@ -43,6 +42,8 @@ func applyMounts(root string, mounts [][]string) error {
 		if !filepath.IsAbs(target) {
 			return fmt.Errorf("invalid target mount must be absolute path: '%s'", target)
 		}
+
+		log("mounting %s (%s) on %s", source, fstype, target)
 
 		path := filepath.Join(root, target)
 		if err := os.MkdirAll(path, 0755); err != nil {
