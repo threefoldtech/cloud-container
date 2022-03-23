@@ -12,7 +12,7 @@ run_hook() {
    mkdir -p /sys/fs/cgroup || true
 
    mount -t devpts -o rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=666 devpts /dev/pts
-   mount -t cgroup none /sys/fs/cgroup
+   mount -t cgroup2 none /sys/fs/cgroup
    mount -t tmpfs tmpfs /dev/shm
    ln -s /proc/self/fd /dev/fd
 
@@ -41,7 +41,7 @@ process_mounts() {
       fi
    done
 }
-  
+
 # manually tested on export qsfs_qsfsnamewithoutdashesorcolons="/New Folder/targ=t"
 process_virtiofs_mounts() {
 env | while IFS= read -r entry; do
