@@ -76,19 +76,22 @@ func applyUsers(root string, users []User) error {
 			continue
 		}
 
-		path := filepath.Join(root, "/root")
+		log("found user root")
+
+		path := filepath.Join(root, "root")
 
 		if err := os.MkdirAll(path, 0750); err != nil {
 			return fmt.Errorf("failed to create root home directory: %w", err)
 		}
 
-		path = filepath.Join(root, "root", ".ssh")
+		path = filepath.Join(path, ".ssh")
 		if err := os.MkdirAll(path, 0700); err != nil {
 			return fmt.Errorf("failed to create root .ssh directory: %w", err)
 		}
 
+		path = filepath.Join(path, "authorized_keys")
 		err := ioutil.WriteFile(
-			filepath.Join(path, "authorized_keys"),
+			path,
 			[]byte(strings.Join(user.Keys, "\n")),
 			0664,
 		)
