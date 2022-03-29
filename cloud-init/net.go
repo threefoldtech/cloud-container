@@ -26,7 +26,7 @@ type Nameservers struct {
 
 type Ethernet struct {
 	Match struct {
-		Name string `json:"name"`
+		Mac string `json:"macaddress"`
 	} `yaml:"match"`
 	DHCP4       bool        `yaml:"dhcp4"`
 	Addresses   []string    `yaml:"addresses"`
@@ -47,16 +47,24 @@ func ApplyNetwork(seed, root string) error {
 
 	ns := make(map[string]struct{})
 
+	links, err := netlink.LinkList()
+	if err != nil {
+		return fmt.Errorf("failed to list available nics: %s", err)
+	}
+	nics := make(map[string]netlink.Link)
+	for _, link := range links {
+		nics[link.Attrs().HardwareAddr.String()] = link
+	}
 	for _, eth := range network.Ethernets {
-		name := eth.Match.Name
-		link, err := netlink.LinkByName(name)
-		if err != nil {
-			log("invalid nic card '%s': %s", name, err)
+		mac := eth.Match.Mac
+		link, ok := nics[mac]
+		if !ok {
+			log("no nic found with mac: %s", mac)
 			continue
 		}
 
 		if err := netlink.LinkSetUp(link); err != nil {
-			return fmt.Errorf("failed to set device '%s' up: %w", name, err)
+			return fmt.Errorf("failed to set device '%s' up: %w", mac, err)
 		}
 
 		for _, address := range eth.Addresses {
@@ -67,7 +75,7 @@ func ApplyNetwork(seed, root string) error {
 			}
 
 			if err := netlink.AddrAdd(link, ip); err != nil {
-				return fmt.Errorf("failed to assign ip address '%s' to intreface '%s': %w", address, name, err)
+				return fmt.Errorf("failed to assign ip address '%s' to intreface '%s': %w", address, mac, err)
 			}
 		}
 
@@ -82,7 +90,7 @@ func ApplyNetwork(seed, root string) error {
 				Gw:        route.Via,
 				LinkIndex: link.Attrs().Index,
 			}); err != nil {
-				return fmt.Errorf("failed to set route %s via %s on interface %s: %w", route.To, route.Via.String(), name, err)
+				return fmt.Errorf("failed to set route %s via %s on interface %s: %w", route.To, route.Via.String(), mac, err)
 			}
 		}
 
@@ -95,7 +103,7 @@ func ApplyNetwork(seed, root string) error {
 				Gw:        eth.Gateway4,
 				LinkIndex: link.Attrs().Index,
 			}); err != nil {
-				return fmt.Errorf("failed to set route default(4) via %s on interface %s: %w", eth.Gateway4.String(), name, err)
+				return fmt.Errorf("failed to set route default(4) via %s on interface %s: %w", eth.Gateway4.String(), mac, err)
 			}
 		}
 
@@ -108,7 +116,7 @@ func ApplyNetwork(seed, root string) error {
 				Gw:        eth.Gateway6,
 				LinkIndex: link.Attrs().Index,
 			}); err != nil {
-				return fmt.Errorf("failed to set route default(6) via %s on interface %s: %w", eth.Gateway4.String(), name, err)
+				return fmt.Errorf("failed to set route default(6) via %s on interface %s: %w", eth.Gateway4.String(), mac, err)
 			}
 		}
 

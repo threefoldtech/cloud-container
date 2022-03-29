@@ -21,3 +21,6 @@ mkdir -p output || true
 for layer in $(find ${tmp} -name layer.tar); do
     tar -xf $layer -C output
 done
+
+# finally include the hypervisor-fw in the image
+curl -L -o output/hypervisor-fw https://github.com/cloud-hypervisor/rust-hypervisor-firmware/releases/download/0.3.2/hypervisor-fw
