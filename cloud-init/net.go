@@ -26,7 +26,7 @@ type Nameservers struct {
 
 type Ethernet struct {
 	Match struct {
-		Mac string `json:"macaddress"`
+		Mac string `yaml:"macaddress"`
 	} `yaml:"match"`
 	DHCP4       bool        `yaml:"dhcp4"`
 	Addresses   []string    `yaml:"addresses"`
@@ -53,8 +53,10 @@ func ApplyNetwork(seed, root string) error {
 	}
 	nics := make(map[string]netlink.Link)
 	for _, link := range links {
+		log("found device with mac: %s", link.Attrs().HardwareAddr.String())
 		nics[link.Attrs().HardwareAddr.String()] = link
 	}
+
 	for _, eth := range network.Ethernets {
 		mac := eth.Match.Mac
 		link, ok := nics[mac]
@@ -62,7 +64,7 @@ func ApplyNetwork(seed, root string) error {
 			log("no nic found with mac: %s", mac)
 			continue
 		}
-
+		log("setting up (%s)", mac)
 		if err := netlink.LinkSetUp(link); err != nil {
 			return fmt.Errorf("failed to set device '%s' up: %w", mac, err)
 		}
