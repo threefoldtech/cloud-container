@@ -73,7 +73,9 @@ run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
 run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
 
 # 'set --' in .zosrc requires it to run outside of any function
-[ -f /new_root/.zosrc ] && source /new_root/.zosrc
+[ -f /seed/zosrc ] && source /seed/zosrc
+# clean up
+umount /seed || true
 
 # for debugging purposes, we keep .zosrc
 # rm -f /new_root/.zosrc

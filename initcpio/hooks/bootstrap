@@ -16,52 +16,14 @@ run_hook() {
    mount -t tmpfs tmpfs /dev/shm
    ln -s /proc/self/fd /dev/fd
 
-   echo "setting up network"
-   bash /setupnetwork
+   seed=$(blkid -t LABEL="cidata" -o device)
+   if [ -z "$seed" ]; then
+      echo "no seed disk found"
+      exit 1
+   fi
 
-   # we only care that an outgoing packet arrives at the gateway
-   ping -c1 -w1 8.8.8.8
-}
-
-process_mounts() {
-   for c in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
-      name=vd${c}
-      target=$(eval echo \$$name)
-      if [ "$target" = "/" ]; then
-         echo "invalid mount target /"
-         continue
-      fi
-      # we only try as long as the given mount
-      # has a valid target
-      if [ ! -z "$target" ]; then
-         dst="/new_root/$target"
-         mkdir -p "${dst}" || true
-         echo "mounting $name on $target"
-         mount "/dev/$name" "$dst"
-      fi
-   done
-}
-
-# manually tested on export qsfs_qsfsnamewithoutdashesorcolons="/New Folder/targ=t"
-process_virtiofs_mounts() {
-env | while IFS= read -r entry; do
-      case $entry in
-      qsfs_*)
-            fs=${entry%%=*}
-            fs=${fs#qsfs_}
-            target=${entry#*=}
-            if [ "$target" = "/" ]; then
-               echo "invalid mount target /"
-               continue
-            fi
-
-            dst="/new_root/$target"
-            mkdir -p "$dst" || true
-            echo "mounting virtiofs $fs on $target"
-            mount -t virtiofs "$fs" "$dst"
-            ;;
-      esac
-   done
+   mkdir -p /seed
+   mount -t vfat "$seed" /seed
 }
 
 fill_etc_hosts() {
@@ -80,20 +42,17 @@ ff02::2 ip6-allrouters'
 run_latehook() {
    echo "settign up environment"
    export HOME=/root
-   export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+   export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
    mkdir -p /new_root/etc || true
-   echo "updating resolv.conf"
-   cp /etc/resolv.conf /new_root/etc/
 
-   echo "process mounts"
-   process_mounts
+   echo "setting up system"
+   /cloudinit /seed /new_root
 
-   echo "process virtiofs mounts"
-   process_virtiofs_mounts
+   # we only care that an outgoing packet arrives at the gateway
+   ping -c1 -w1 8.8.8.8
 
    echo "fill /etc/hosts"
    fill_etc_hosts
-
 }
 
 # vim: set ft=sh ts=4 sw=4 et:

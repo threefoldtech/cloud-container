@@ -13,7 +13,7 @@ RUN make -j $(nproc)
 
 COPY mkinitcpio.conf /root/
 COPY initcpio /root/initcpio
-COPY setupnetwork /
+COPY cloudinit /
 # override the original initcpio
 COPY init /usr/lib/initcpio
 WORKDIR /root
