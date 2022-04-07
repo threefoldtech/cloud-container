@@ -55,6 +55,12 @@ func ApplyNetwork(seed, root string) error {
 	for _, link := range links {
 		log("found device with mac: %s", link.Attrs().HardwareAddr.String())
 		nics[link.Attrs().HardwareAddr.String()] = link
+
+		if link.Attrs().Name == "lo" {
+			if err := netlink.LinkSetUp(link); err != nil {
+				log("failed to set lo device up: %s", err)
+			}
+		}
 	}
 
 	for _, eth := range network.Ethernets {
