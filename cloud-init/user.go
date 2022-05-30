@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 const (
@@ -90,14 +88,33 @@ func applyUsers(root string, users []User) error {
 		}
 
 		path = filepath.Join(path, "authorized_keys")
-		err := ioutil.WriteFile(
-			path,
-			[]byte(strings.Join(user.Keys, "\n")),
-			0664,
-		)
-
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0664)
 		if err != nil {
+			return fmt.Errorf("failed to create authorized_keys file: %w", err)
+		}
+
+		defer file.Close()
+
+		if err := writeKeys(file, user.Keys); err != nil {
 			return fmt.Errorf("failed to write authorized_keys file: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func writeKeys(file *os.File, keys []string) error {
+	if _, err := file.Write([]byte{'\n'}); err != nil {
+		return err
+	}
+
+	for _, key := range keys {
+		if _, err := file.WriteString(key); err != nil {
+			return err
+		}
+
+		if _, err := file.Write([]byte{'\n'}); err != nil {
+			return err
 		}
 	}
 
