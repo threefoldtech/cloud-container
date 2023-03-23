@@ -27,7 +27,7 @@ jobs:
         if: success()
         uses: threefoldtech/publish-flist@master
         with:
-          token: ${{ secrets.token }}
+          token: ${{ secrets.HUB_JWT }}
           action: publish
           user: tf-autobuilder
           root: output/${{ inputs.package }}
