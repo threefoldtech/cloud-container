@@ -1,0 +1,34 @@
+on:
+  push:
+    branches:
+      - "main"
+
+name: Build
+
+jobs:
+  build:
+    name: Building cloud-container
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ">=1.20.0"
+      - name: Binaries
+        run: |
+          bash ./build.sh
+      - name: Package
+        id: package
+        run: |
+          commit=$(git rev-parse --short HEAD)
+          echo "name=cloud-container-${commit}" >> $GITHUB_OUTPUT
+      - name: Publish flist (tf-autobuilder, ${{ steps.package.outputs.name }})
+        if: success()
+        uses: threefoldtech/publish-flist@master
+        with:
+          token: ${{ secrets.token }}
+          action: publish
+          user: tf-autobuilder
+          root: output/${{ inputs.package }}
+          name: ${{ steps.package.outputs.name }}.flist
