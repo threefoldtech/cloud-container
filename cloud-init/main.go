@@ -26,4 +26,8 @@ func main() {
 	if err := ApplyNetwork(seed, root); err != nil {
 		log("failed to apply network: %v", err)
 	}
+
+	if err := Miscellaneous(root); err != nil {
+		log("failed to apply miscellaneous: %v", err)
+	}
 }
