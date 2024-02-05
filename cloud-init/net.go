@@ -72,7 +72,8 @@ func ApplyNetwork(seed, root string) error {
 		}
 		log("setting up (%s)", mac)
 		if err := netlink.LinkSetUp(link); err != nil {
-			return fmt.Errorf("failed to set device '%s' up: %w", mac, err)
+			log("failed to set device '%s' up: %s", mac, err.Error())
+			continue
 		}
 
 		for _, address := range eth.Addresses {
@@ -83,14 +84,15 @@ func ApplyNetwork(seed, root string) error {
 			}
 
 			if err := netlink.AddrAdd(link, ip); err != nil {
-				return fmt.Errorf("failed to assign ip address '%s' to intreface '%s': %w", address, mac, err)
+				log("failed to assign ip address '%s' to intreface '%s': %s", address, mac, err.Error())
 			}
 		}
 
 		for _, route := range eth.Routes {
 			_, to, err := net.ParseCIDR(route.To)
 			if err != nil {
-				return fmt.Errorf("failed to parse cidr %s: %w", route.To, err)
+				log("failed to parse cidr %s: %s", route.To, err.Error())
+				continue
 			}
 
 			if err := netlink.RouteAdd(&netlink.Route{
@@ -98,7 +100,7 @@ func ApplyNetwork(seed, root string) error {
 				Gw:        route.Via,
 				LinkIndex: link.Attrs().Index,
 			}); err != nil {
-				return fmt.Errorf("failed to set route %s via %s on interface %s: %w", route.To, route.Via.String(), mac, err)
+				log("failed to set route %s via %s on interface %s: %s", route.To, route.Via.String(), mac, err.Error())
 			}
 		}
 
@@ -111,7 +113,7 @@ func ApplyNetwork(seed, root string) error {
 				Gw:        eth.Gateway4,
 				LinkIndex: link.Attrs().Index,
 			}); err != nil {
-				return fmt.Errorf("failed to set route default(4) via %s on interface %s: %w", eth.Gateway4.String(), mac, err)
+				log("failed to set route default(4) via %s on interface %s: %s", eth.Gateway4.String(), mac, err.Error())
 			}
 		}
 
@@ -124,7 +126,7 @@ func ApplyNetwork(seed, root string) error {
 				Gw:        eth.Gateway6,
 				LinkIndex: link.Attrs().Index,
 			}); err != nil {
-				return fmt.Errorf("failed to set route default(6) via %s on interface %s: %w", eth.Gateway4.String(), mac, err)
+				log("failed to set route default(6) via %s on interface %s: %s", eth.Gateway4.String(), mac, err.Error())
 			}
 		}
 
