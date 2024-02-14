@@ -70,6 +70,13 @@ func ApplyNetwork(seed, root string) error {
 			log("no nic found with mac: %s", mac)
 			continue
 		}
+		log("disabling router advertisements for %s", mac)
+
+		raPath := fmt.Sprintf("/proc/sys/net/ipv6/conf/%s/accept_ra", link.Attrs().Name)
+		if err := os.WriteFile(raPath, []byte("0"), 0644); err != nil {
+			log("failed to disable router advertisements for %s: %s", mac, err.Error())
+		}
+
 		log("setting up (%s)", mac)
 		if err := netlink.LinkSetUp(link); err != nil {
 			log("failed to set device '%s' up: %s", mac, err.Error())
@@ -126,7 +133,7 @@ func ApplyNetwork(seed, root string) error {
 				Gw:        eth.Gateway6,
 				LinkIndex: link.Attrs().Index,
 			}); err != nil {
-				log("failed to set route default(6) via %s on interface %s: %s", eth.Gateway4.String(), mac, err.Error())
+				log("failed to set route default(6) via %s on interface %s: %s", eth.Gateway6.String(), mac, err.Error())
 			}
 		}
 
